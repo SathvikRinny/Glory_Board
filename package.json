@@ -1,0 +1,56 @@
+{
+  "name": "gloryboard",
+  "version": "1.0.0",
+  "description": "Church presentation control software",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.gloryboard.app",
+    "productName": "GloryBoard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "bible_full.json",
+      "telugu_bible.json",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "renderer/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "renderer/icon.icns",
+      "category": "public.app-category.utilities"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^25.1.8"
+  },
+  "keywords": [
+    "presentation",
+    "church",
+    "lyrics",
+    "electron"
+  ],
+  "author": "GloryBoard",
+  "license": "MIT",
+  "dependencies": {
+    "pdf-parse": "^2.4.5"
+  }
+}

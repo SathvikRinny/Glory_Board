@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GloryBoard</title>
+<style>
+/* ── Fonts ──────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Raleway:wght@300;400;600;700&family=Open+Sans:wght@300;400;600&family=Merriweather:ital,wght@0,300;0,700;1,300&family=Montserrat:wght@300;400;600;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+
+/* ── Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --bg0: #080810;
+  --bg1: #0f0f1a;
+  --bg2: #161624;
+  --bg3: #1e1e30;
+  --bg4: #252540;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.14);
+  --gold: #c9a84c;
+  --gold-light: #e8c878;
+  --gold-dim: rgba(201,168,76,0.25);
+  --amber: #e8943a;
+  --blue: #4a7fd4;
+  --blue-dim: rgba(74,127,212,0.2);
+  --red: #d44a4a;
+  --green: #4ad478;
+  --green-dim: rgba(74,212,120,0.15);
+  --text0: #f0f0f8;
+  --text1: #b0b0c8;
+  --text2: #6a6a88;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --font-display: 'Cinzel', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg0);
+  color: var(--text0);
+  font-family: var(--font-body);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── Top Bar ────────────────────────────────────────────────────────────── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 48px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+#topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gold-light);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.logo-cross {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--gold);
+  font-size: 16px;
+}
+
+#screen-tabs {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  align-items: center;
+}
+
+.screen-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  position: relative;
+}
+
+.screen-tab:hover { border-color: var(--border-bright); color: var(--text1); }
+
+.screen-tab.active {
+  border-color: var(--gold-dim);
+  background: rgba(201,168,76,0.08);
+  color: var(--gold-light);
+}
+
+.screen-tab.selected {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+  color: #7ab0f0;
+}
+
+.screen-tab .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text2);
+  flex-shrink: 0;
+}
+.screen-tab.selected .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.screen-checkbox {
+  display: none;
+}
+
+.tab-label { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+#topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.status-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.status-pill.live { background: rgba(74,212,120,0.15); color: var(--green); border: 1px solid rgba(74,212,120,0.3); }
+.status-pill.idle { background: rgba(106,106,136,0.15); color: var(--text2); border: 1px solid var(--border); }
+
+/* ── Main Layout ────────────────────────────────────────────────────────── */
+#main {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 1fr;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── Left Panel: Content Input ──────────────────────────────────────────── */
+#left-panel {
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 16px 10px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-header svg { width: 12px; height: 12px; }
+
+/* Mode tabs */
+#content-mode-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mode-tab {
+  flex: 1;
+  padding: 9px 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+.mode-tab:hover { color: var(--text1); }
+.mode-tab.active { color: var(--gold-light); border-bottom-color: var(--gold); }
+
+#content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+#content-area::-webkit-scrollbar { width: 4px; }
+#content-area::-webkit-scrollbar-track { background: transparent; }
+#content-area::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* Song mode */
+#song-panel, #bible-panel, #camera-panel { display: none; flex-direction: column; gap: 10px; }
+#song-panel.active, #bible-panel.active, #camera-panel.active { display: flex; }
+
+/* Section card groups inside left panel */
+.content-group {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.content-group .field-label { margin-bottom: 0; }
+
+.camera-device-list { display: flex; flex-direction: column; gap: 6px; }
+.camera-device-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 12px;
+}
+.camera-device-item:hover { border-color: var(--border-bright); background: var(--bg3); }
+.camera-device-item.selected { border-color: var(--gold); background: var(--bg3); }
+.camera-device-item .cam-icon { font-size: 16px; flex-shrink: 0; }
+.camera-device-item .cam-info { flex: 1; overflow: hidden; }
+.camera-device-item .cam-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.camera-device-item .cam-type { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.camera-device-item .cam-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg4); flex-shrink: 0; }
+.camera-device-item.selected .cam-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.cam-preview-wrap {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  position: relative;
+}
+.cam-preview-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-preview-placeholder {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; color: var(--text2); font-size: 11px;
+}
+.cam-res-badge {
+  position: absolute; bottom: 6px; right: 8px;
+  background: rgba(0,0,0,0.65);
+  color: var(--text1); font-size: 9px; font-family: var(--font-mono);
+  padding: 2px 6px; border-radius: 4px;
+}
+
+/* Scene Switcher */
+.scene-switcher {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.scene-btn {
+  flex: 1; min-width: 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  font-size: 18px;
+  color: var(--text1);
+  user-select: none;
+}
+.scene-btn span { font-size: 9px; font-family: var(--font-mono); color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+.scene-btn:hover { border-color: var(--border-bright); background: var(--bg4); }
+.scene-btn.active-scene { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold-light); }
+.scene-btn.active-scene span { color: var(--gold-dim); }
+
+/* Lower Third controls */
+.lower-third-row { display: flex; gap: 4px; align-items: center; }
+.lt-dur-btn {
+  padding: 4px 8px; font-size: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; color: var(--text1);
+  transition: border-color 0.15s, background 0.15s;
+  font-family: var(--font-mono);
+}
+.lt-dur-btn:hover { border-color: var(--border-bright); }
+.lt-dur-btn.active { border-color: var(--gold); color: var(--gold-light); background: rgba(201,168,76,0.1); }
+
+/* Transition controls */
+.transition-row { display: flex; gap: 8px; align-items: center; }
+.radio-pill {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; cursor: pointer; color: var(--text1);
+}
+.radio-pill input { accent-color: var(--gold); }
+
+.field-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 5px;
+}
+
+textarea {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text0);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+textarea:focus { border-color: var(--gold-dim); }
+textarea::placeholder { color: var(--text2); }
+
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.btn {
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: var(--bg4); color: var(--text0); border-color: var(--border-bright); }
+.btn:active { transform: scale(0.97); }
+
+.btn.primary {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.btn.primary:hover { background: rgba(201,168,76,0.35); }
+
+.btn.danger { border-color: rgba(212,74,74,0.4); color: var(--red); }
+.btn.danger:hover { background: rgba(212,74,74,0.15); }
+
+.btn.success { border-color: rgba(74,212,120,0.4); color: var(--green); }
+.btn.success:hover { background: var(--green-dim); }
+
+.btn.active-btn {
+  background: rgba(74,127,212,0.2);
+  border-color: var(--blue);
+  color: #7ab0f0;
+}
+
+.btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* Slides list */
+#slides-container, #bible-verse-slides {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.slide-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--text1);
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.4;
+  font-family: var(--font-mono);
+}
+.slide-item:hover { border-color: var(--border-bright); color: var(--text0); }
+.slide-item.current { border-color: var(--gold-dim); background: rgba(201,168,76,0.08); color: var(--gold-light); }
+
+/* Bible */
+select {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text0);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+select:focus { border-color: var(--gold-dim); }
+option { background: var(--bg2); }
+
+.chapter-grid, .verse-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ch-btn, .v-btn {
+  width: 36px; height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.ch-btn:hover, .v-btn:hover { color: var(--text0); border-color: var(--border-bright); }
+.ch-btn.sel, .v-btn.sel { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+
+/* ── Center Panel ───────────────────────────────────────────────────────── */
+#center-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg0);
+}
+
+/* Action bar */
+#action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.action-group {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.action-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.big-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.18s;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.big-btn svg { width: 14px; height: 14px; }
+.big-btn:active { transform: scale(0.96); }
+
+.big-btn.present {
+  background: rgba(74,212,120,0.12);
+  border-color: var(--green);
+  color: var(--green);
+  font-weight: 500;
+}
+.big-btn.present:hover { background: rgba(74,212,120,0.22); }
+
+.big-btn.blank {
+  background: rgba(212,74,74,0.1);
+  border-color: var(--red);
+  color: var(--red);
+}
+.big-btn.blank:hover { background: rgba(212,74,74,0.2); }
+
+.big-btn.sync {
+  background: rgba(74,127,212,0.12);
+  border-color: var(--blue);
+  color: #7ab0f0;
+}
+.big-btn.sync:hover { background: rgba(74,127,212,0.22); }
+.big-btn.sync.off {
+  background: var(--bg2);
+  border-color: var(--border);
+  color: var(--text2);
+}
+
+.big-btn.indep {
+  background: rgba(232,148,58,0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.big-btn.indep:hover { background: rgba(232,148,58,0.2); }
+.big-btn.indep.off {
+  background: var(--bg2);
+  border-color: var(--border);
+  color: var(--text2);
+}
+
+.big-btn.cam-feed {
+  background: rgba(201,168,76,0.08);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.big-btn.cam-feed:hover { background: rgba(201,168,76,0.18); }
+.big-btn.cam-feed.live {
+  background: rgba(212,74,74,0.18);
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulse-cam 2s ease-in-out infinite;
+}
+@keyframes pulse-cam {
+  0%,100% { box-shadow: 0 0 0 0 rgba(212,74,74,0); }
+  50%      { box-shadow: 0 0 0 4px rgba(212,74,74,0.2); }
+}
+
+/* Preview area */
+#preview-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  gap: 12px;
+}
+
+.preview-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+
+#screens-preview {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.screen-preview-card {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.screen-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.screen-preview-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.screen-preview-frame {
+  background: #000;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  /* aspect-ratio set dynamically per screen bounds */
+}
+.screen-preview-frame:hover { border-color: var(--border-bright); }
+.screen-preview-frame.active-preview { border-color: var(--gold-dim); }
+
+.screen-preview-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text2);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-placeholder svg { width: 32px; height: 32px; opacity: 0.3; }
+
+.preview-overlay-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+/* No screens */
+#no-screens-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+#no-screens-msg svg { width: 48px; height: 48px; opacity: 0.2; }
+
+/* ── Right Panel ────────────────────────────────────────────────────────── */
+#right-panel {
+  background: var(--bg1);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.right-section {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  flex-shrink: 0;
+}
+.right-section:last-child { border-bottom: none; flex: 1; }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+/* Text style controls */
+.style-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+/* Live style preview mini-canvas */
+#style-preview-box {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 60px;
+}
+
+#style-preview-text {
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  width: 100%;
+  pointer-events: none;
+  /* font styles applied dynamically via JS */
+}
+
+#style-preview-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.icon-btn {
+  width: 30px; height: 30px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text1);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-size: 13px;
+  font-weight: bold;
+  user-select: none;
+}
+.icon-btn svg { width: 14px; height: 14px; }
+.icon-btn:hover { border-color: var(--border-bright); color: var(--text0); }
+.icon-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+
+input[type="range"] {
+  flex: 1;
+  height: 3px;
+  -webkit-appearance: none;
+  background: var(--bg4);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+}
+
+.range-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text2);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Font picker */
+#font-select {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* Alignment */
+.align-group {
+  display: flex;
+  gap: 4px;
+}
+
+/* Control group — subtle background card for related right-panel controls */
+.ctrl-group {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ctrl-group .field-label { margin-bottom: 0; }
+.ctrl-group .style-row { margin-bottom: 0; }
+
+/* Custom select arrow */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a6a88'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+/* Video upload */
+.upload-zone {
+  border: 1px dashed var(--border-bright);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text2);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.upload-zone:hover { border-color: var(--gold-dim); color: var(--text1); background: rgba(201,168,76,0.04); }
+.upload-zone svg { width: 22px; height: 22px; opacity: 0.5; }
+
+.video-name {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 4px 8px;
+  background: var(--bg2);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Logo */
+.logo-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Scrollable right sections area */
+#right-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#right-scroll::-webkit-scrollbar { width: 4px; }
+#right-scroll::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.pulsing { animation: pulse 2s ease-in-out infinite; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease; }
+
+
+/* ── Tooltip ────────────────────────────────────────────────────────────── */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg4);
+  color: var(--text0);
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+[data-tip]:hover::after { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <div class="logo-text"><span class="logo-cross">✦</span>GloryBoard</div>
+
+  <div id="screen-tabs">
+    <!-- Populated dynamically -->
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text2);letter-spacing:0.06em;">Detecting screens…</span>
+  </div>
+
+  <div id="topbar-right">
+    <div class="status-pill idle" id="live-status">● IDLE</div>
+  </div>
+</div>
+
+<!-- ── Main Layout ──────────────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- LEFT: Content input -->
+  <div id="left-panel">
+    <div class="panel-header">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="9" y2="9"/></svg>
+      Content
+    </div>
+
+    <div id="content-mode-tabs">
+      <div class="mode-tab active" data-mode="song" onclick="switchMode('song')">Songs</div>
+      <div class="mode-tab" data-mode="bible" onclick="switchMode('bible')">Bible</div>
+      <div class="mode-tab" data-mode="camera" onclick="switchMode('camera')">📷 Camera</div>
+    </div>
+
+    <div id="content-area">
+      <!-- Song Panel -->
+      <div id="song-panel" class="active">
+        <div class="content-group">
+          <div class="field-label">Lyrics</div>
+          <textarea id="lyrics-input" placeholder="Paste or type your lyrics here…&#10;&#10;Use blank lines to separate slides." rows="8"></textarea>
+          <div class="row">
+            <button class="btn" style="flex:1" onclick="splitByPara()" data-tip="Split by paragraphs">Para Split</button>
+            <button class="btn" style="flex:1" onclick="splitByLine()" data-tip="Split by lines">Line Split</button>
+          </div>
+        </div>
+        <div class="content-group">
+          <div class="field-label">Slides</div>
+          <div id="slides-container"></div>
+        </div>
+      </div>
+
+      <!-- Bible Panel -->
+      <div id="bible-panel">
+        <div class="content-group">
+          <div class="field-label">Language</div>
+          <div class="row" id="lang-toggle">
+            <button class="btn active-btn" onclick="setBibleLang('english')" id="btn-english" style="flex:1">English</button>
+            <button class="btn" onclick="setBibleLang('telugu')" id="btn-telugu" style="flex:1">Telugu</button>
+          </div>
+          <div class="field-label">Book</div>
+          <select id="bible-book" onchange="loadChapters()"></select>
+        </div>
+        <div class="content-group">
+          <div class="field-label">Chapter</div>
+          <div class="chapter-grid" id="chapter-grid"></div>
+        </div>
+        <div class="content-group">
+          <div class="field-label">Verse</div>
+          <div class="chapter-grid" id="verse-num-grid"></div>
+        </div>
+        <div class="content-group">
+          <div class="field-label">Slides</div>
+          <div id="bible-verse-slides">
+            <div id="bible-status" style="color:var(--text2);font-size:11px;padding:6px 0">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Panel -->
+      <div id="camera-panel">
+
+        <!-- Device list -->
+        <div class="content-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="field-label">Camera Sources</div>
+            <button class="btn" onclick="refreshCameras()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+          </div>
+          <div class="camera-device-list" id="camera-device-list">
+            <div style="color:var(--text2);font-size:11px;padding:8px 0">Scanning cameras…</div>
+          </div>
+        </div>
+
+        <!-- Live preview -->
+        <div class="content-group">
+          <div class="field-label">Preview</div>
+          <div class="cam-preview-wrap">
+            <video id="cam-ctrl-preview" playsinline autoplay muted style="display:none"></video>
+            <div class="cam-preview-placeholder" id="cam-preview-ph">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="28" height="28"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              <span>No camera selected</span>
+            </div>
+            <div class="cam-res-badge" id="cam-res-badge" style="display:none"></div>
+          </div>
+          <button class="btn primary" onclick="cameraGoLive()" style="width:100%">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+            Go Live — Camera
+          </button>
+        </div>
+
+        <!-- Transition style -->
+        <div class="content-group">
+          <div class="field-label">Transition</div>
+          <div class="transition-row">
+            <label class="radio-pill">
+              <input type="radio" name="transition" value="fade" checked onchange="setTransition('fade')"> Fade
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="transition" value="cut" onchange="setTransition('cut')"> Cut (instant)
+            </label>
+          </div>
+        </div>
+
+      </div><!-- end camera-panel -->
+
+    </div><!-- end content-area -->
+
+  </div><!-- end left-panel -->
+
+  <!-- CENTER: Preview + Actions -->
+  <div id="center-panel">
+    <!-- Action bar -->
+    <div id="action-bar">
+      <div class="action-group">
+        <button class="big-btn present" onclick="presentContent()" data-tip="Push to selected screens">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="4,2 14,8 4,14"/></svg>
+          Present
+        </button>
+        <button class="big-btn blank" onclick="blankAll()" data-tip="Black out all screens">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
+          Blank
+        </button>
+        <button class="big-btn cam-feed" id="cam-feed-btn" onclick="toggleCamFeed()" data-tip="Toggle camera live feed">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 5l4-3v12l-4-3V5z"/><rect x="1" y="4" width="9" height="8" rx="1.5"/></svg>
+          Cam Feed
+        </button>
+      </div>
+
+      <div class="action-divider"></div>
+
+      <div class="action-group">
+        <button class="big-btn sync active-btn" id="sync-btn" onclick="toggleSync(true)" data-tip="Mirror on all screens">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2,8 C2,4.7 4.7,2 8,2 C10.1,2 12,3 13.2,4.5"/><path d="M14,8 C14,11.3 11.3,14 8,14 C5.9,14 4,13 2.8,11.5"/><polyline points="11,2 13.5,4.5 11,7"/><polyline points="5,14 2.5,11.5 5,9"/></svg>
+          Sync
+        </button>
+        <button class="big-btn indep off" id="indep-btn" onclick="toggleSync(false)" data-tip="Independent per screen">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="8" rx="1"/><rect x="9" y="4" width="6" height="8" rx="1"/></svg>
+          Indep
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen previews -->
+    <div id="preview-area">
+      <div class="preview-label">Screen Preview</div>
+      <div id="screens-preview">
+        <div id="no-screens-msg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>No external screens selected.</span>
+          <span style="font-size:10px;color:var(--text2)">Select a screen in the top bar to begin.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Style + Video + Logo -->
+  <div id="right-panel">
+    <div id="right-scroll">
+
+      <!-- Text Style -->
+      <div class="right-section">
+        <div class="section-title">Text Style</div>
+
+        <!-- Clear text button -->
+        <button class="btn danger" onclick="clearText()" style="width:100%;margin-bottom:10px;">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+          Clear Text (Hide)
+        </button>
+
+        <!-- Live Preview Mini Canvas -->
+        <div id="style-preview-box">
+          <div id="style-preview-text"></div>
+          <div id="style-preview-hint">Style preview</div>
+        </div>
+
+        <div class="field-label">Font</div>
+        <select id="font-select" class="font-select" onchange="updateTextStyle()">
+          <option value="Cinzel, serif">Cinzel — Classic Display</option>
+          <option value="'Playfair Display', serif">Playfair Display — Elegant</option>
+          <option value="'EB Garamond', serif">EB Garamond — Traditional</option>
+          <option value="'Merriweather', serif">Merriweather — Readable Serif</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="Montserrat, sans-serif">Montserrat — Modern Bold</option>
+          <option value="Raleway, sans-serif">Raleway — Clean & Light</option>
+          <option value="'DM Sans', sans-serif" selected>DM Sans — UI Clean</option>
+          <option value="'Open Sans', sans-serif">Open Sans — Neutral</option>
+          <option value="Lato, sans-serif">Lato — Friendly</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          <option value="'Courier New', monospace">Courier New — Mono</option>
+        </select>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;margin-bottom:8px;">
+          <div style="display:flex;gap:4px;">
+            <div class="icon-btn" id="bold-btn" onclick="toggleStyle('bold')" data-tip="Bold"><b>B</b></div>
+            <div class="icon-btn" id="italic-btn" onclick="toggleStyle('italic')" data-tip="Italic"><i>I</i></div>
+            <div class="icon-btn" id="shadow-btn" onclick="toggleStyle('shadow')" data-tip="Text shadow">
+              <svg viewBox="0 0 16 16" fill="currentColor"><text x="2" y="11" font-size="10" font-family="serif">S</text></svg>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <div class="icon-btn" onclick="setAlign('left')" id="align-left" data-tip="Left">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="5" x2="14" y2="5"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="11" x2="12" y2="11"/></svg>
+            </div>
+            <div class="icon-btn active" onclick="setAlign('center')" id="align-center" data-tip="Center">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="5" x2="14" y2="5"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="11" x2="13" y2="11"/></svg>
+            </div>
+            <div class="icon-btn" onclick="setAlign('right')" id="align-right" data-tip="Right">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="5" x2="14" y2="5"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="4" y1="11" x2="14" y2="11"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <div class="field-label">Font Size</div>
+          <div class="style-row">
+            <input type="range" id="font-size" min="16" max="120" value="52" oninput="updateTextStyle()">
+            <span class="range-label" id="font-size-val">52</span>
+          </div>
+          <div class="field-label">Line Spacing</div>
+          <div class="style-row">
+            <input type="range" id="line-spacing" min="1" max="3" step="0.05" value="1.3" oninput="updateTextStyle()">
+            <span class="range-label" id="line-spacing-val">1.3</span>
+          </div>
+          <div class="field-label">Word Spacing</div>
+          <div class="style-row">
+            <input type="range" id="word-spacing" min="0" max="20" step="1" value="0" oninput="updateTextStyle()">
+            <span class="range-label" id="word-spacing-val">0</span>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <div class="field-label">Text Color</div>
+          <div class="style-row">
+            <input type="color" id="text-color" value="#ffffff" oninput="updateTextStyle()" style="width:36px;height:28px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:0;">
+            <div class="field-label" style="margin:0 6px 0 2px;white-space:nowrap">BG Overlay</div>
+            <input type="range" id="bg-overlay" min="0" max="100" value="0" oninput="updateTextStyle()">
+            <span class="range-label" id="bg-overlay-val">0%</span>
+          </div>
+          <div class="field-label">Text Box Position</div>
+          <div class="style-row">
+            <select id="valign-select" onchange="updateTextStyle()" style="flex:1">
+              <option value="center" selected>Middle</option>
+              <option value="flex-start">Top</option>
+              <option value="flex-end">Bottom</option>
+            </select>
+            <select id="halign-select" onchange="updateTextStyle()" style="flex:1">
+              <option value="center" selected>Center</option>
+              <option value="flex-start">Left</option>
+              <option value="flex-end">Right</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Background Video -->
+      <div class="right-section">
+        <div class="section-title">Background Video</div>
+        <div class="upload-zone" id="video-upload-zone" onclick="pickVideo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload background video
+          <span style="font-size:9px;color:var(--text2)">MP4, WebM, MOV</span>
+        </div>
+        <div id="video-name" style="display:none" class="video-name"></div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+          <button class="btn" id="video-toggle-btn" onclick="toggleVideoLoop()" style="width:100%">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,4 4,1 7,4"/><path d="M4,1v8a4,4,0,0,0,4,4h3"/><polyline points="12,12 15,9 12,6"/><path d="M15,9H8a4,4,0,0,0-4,4"/></svg>
+            Toggle Loop
+          </button>
+          <button class="btn danger" onclick="removeBackground()" style="width:100%">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+            Remove Video
+          </button>
+        </div>
+      </div>
+
+      <!-- Logo -->
+      <div class="right-section">
+        <div class="section-title">Logo</div>
+        <div class="upload-zone" id="logo-upload-zone" onclick="pickLogo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Upload logo image
+          <span style="font-size:9px;color:var(--text2)">PNG, SVG, WebP</span>
+        </div>
+        <div id="logo-name" style="display:none" class="video-name"></div>
+        <div class="field-label" style="margin-top:8px;">Logo Size</div>
+        <div class="style-row">
+          <input type="range" id="logo-size" min="5" max="50" value="15" oninput="updateLogoLive()">
+          <span class="range-label" id="logo-size-val" style="width:36px">15%</span>
+        </div>
+        <div class="field-label" style="margin-top:6px;">Logo Position</div>
+        <div class="style-row" style="margin-bottom:6px;">
+          <select id="logo-valign" onchange="updateLogoLive()" style="flex:1">
+            <option value="top" selected>Top</option>
+            <option value="center">Middle</option>
+            <option value="bottom">Bottom</option>
+          </select>
+          <select id="logo-halign" onchange="updateLogoLive()" style="flex:1;margin-left:6px">
+            <option value="left" selected>Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px;">
+          <button class="btn primary" onclick="pushLogo()" style="width:100%">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="10" height="10" rx="1"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+            Show Logo
+          </button>
+          <button class="btn" onclick="pushLogoFull()" style="width:100%" data-tip="Large logo centered — hides all text">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><line x1="8" y1="1" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="1" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="15" y2="8"/></svg>
+            Logo Full Center
+          </button>
+          <button class="btn danger" onclick="removeLogo()" style="width:100%">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+            Remove Logo
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end right-scroll -->
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  GloryBoard — Control Renderer
+// ═══════════════════════════════════════════════════════════════════════════
+
+const API = window.gloryAPI;
+
+// ── State ─────────────────────────────────────────────────────────────────
+let displays = [];
+let selectedIds = new Set();
+let syncMode = true;
+let focusedDisplayId = null; // for independent mode targeting
+
+let slides = [];
+let currentSlideIdx = 0;
+let bibleDataEn = {}; // { bookNameEnglish: { chapter: { verse: text_english } } }
+let bibleDataTe = {}; // { bookNameEnglish: { chapter: { verse: text_telugu } } }
+let bibleBooks  = []; // [{ english, telugu }]
+let bibleLang   = 'english';
+let selBook = '', selChapter = 0;
+
+let videoPath = null;
+let logoPath = null;
+let videoLooping = true;
+
+let textStyle = {
+  font: 'DM Sans, sans-serif',
+  size: 52,
+  bold: false,
+  italic: false,
+  shadow: true,
+  align: 'center',
+  valign: 'center',
+  halign: 'center',
+  color: '#ffffff',
+  lineSpacing: 1.3,
+  wordSpacing: 0,
+  bgOverlay: 0,
+};
+
+// ── Displays ──────────────────────────────────────────────────────────────
+async function loadDisplays() {
+  displays = await API.getDisplays();
+  renderScreenTabs();
+  renderPreviews();
+}
+
+function renderScreenTabs() {
+  const tabs = document.getElementById('screen-tabs');
+  tabs.innerHTML = '';
+
+  if (displays.length === 0) {
+    tabs.innerHTML = '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text2)">No displays detected</span>';
+    return;
+  }
+
+  displays.forEach((d, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'screen-tab' + (selectedIds.has(d.id) ? ' selected' : '') + (d.id === focusedDisplayId ? ' active' : '');
+    tab.dataset.id = d.id;
+    const label = d.isPrimary ? 'Primary' : `Screen ${i + 1}`;
+    tab.innerHTML = `
+      <div class="dot"></div>
+      <span class="tab-label">${label}</span>
+      <span style="font-size:9px;color:var(--text2);margin-left:2px">${d.bounds.width}×${d.bounds.height}</span>
+    `;
+    tab.onclick = () => toggleDisplay(d.id, tab);
+    if (!d.isPrimary) {
+      tab.title = selectedIds.has(d.id) ? 'Click to deactivate' : 'Click to activate';
+    }
+    tabs.appendChild(tab);
+  });
+}
+
+async function toggleDisplay(displayId, tab) {
+  const display = displays.find(d => d.id === displayId);
+  if (display && display.isPrimary) return; // don't control primary
+
+  if (selectedIds.has(displayId)) {
+    selectedIds.delete(displayId);
+    await API.deselectDisplay(displayId);
+  } else {
+    selectedIds.add(displayId);
+    focusedDisplayId = displayId;
+    await API.selectDisplay(displayId);
+  }
+  renderScreenTabs();
+  renderPreviews();
+  updateLiveStatus();
+}
+
+function renderPreviews() {
+  const container = document.getElementById('screens-preview');
+  const noMsg = document.getElementById('no-screens-msg');
+
+  const active = displays.filter(d => selectedIds.has(d.id));
+  if (active.length === 0) {
+    container.innerHTML = '';
+    if (noMsg) noMsg.style.display = 'flex';
+    return;
+  }
+  if (noMsg) noMsg.style.display = 'none';
+
+  container.innerHTML = '';
+  active.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'screen-preview-card fade-in';
+    const label = `Screen ${displays.indexOf(d) + 1} — ${d.bounds.width}×${d.bounds.height}`;
+    card.innerHTML = `
+      <div class="screen-preview-header">
+        <div class="screen-preview-title">${label}</div>
+        <div class="btn" onclick="blankOne(${d.id})" style="padding:2px 8px;font-size:9px">Blank</div>
+      </div>
+      <div class="screen-preview-frame ${d.id === focusedDisplayId ? 'active-preview' : ''}" id="preview-${d.id}" onclick="focusDisplay(${d.id})" style="aspect-ratio:${d.bounds.width}/${d.bounds.height}">
+        <div class="preview-placeholder" id="ph-${d.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Live Preview</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  startThumbnailLoop();
+}
+
+function focusDisplay(displayId) {
+  focusedDisplayId = displayId;
+  renderScreenTabs();
+  renderPreviews();
+}
+
+let thumbInterval = null;
+function startThumbnailLoop() {
+  if (thumbInterval) clearInterval(thumbInterval);
+  thumbInterval = setInterval(async () => {
+    for (const d of displays.filter(d => selectedIds.has(d.id))) {
+      const thumb = await API.getScreenThumbnail(d.id);
+      const frame = document.getElementById(`preview-${d.id}`);
+      if (frame && thumb) {
+        const existing = frame.querySelector('img');
+        if (existing) {
+          existing.src = thumb;
+        } else {
+          const ph = frame.querySelector('.preview-placeholder');
+          if (ph) ph.style.display = 'none';
+          const img = document.createElement('img');
+          img.src = thumb;
+          frame.appendChild(img);
+        }
+      }
+    }
+  }, 1000);
+}
+
+function updateLiveStatus() {
+  const el = document.getElementById('live-status');
+  if (selectedIds.size > 0) {
+    el.textContent = '● LIVE';
+    el.className = 'status-pill live pulsing';
+  } else {
+    el.textContent = '● IDLE';
+    el.className = 'status-pill idle';
+  }
+}
+
+// ── Sync / Indep ───────────────────────────────────────────────────────────
+function toggleSync(enable) {
+  syncMode = enable;
+  API.setSyncMode(enable);
+  document.getElementById('sync-btn').className = 'big-btn sync' + (enable ? ' active-btn' : ' off');
+  document.getElementById('indep-btn').className = 'big-btn indep' + (!enable ? '' : ' off');
+}
+
+// ── Text Style ─────────────────────────────────────────────────────────────
+
+// Tracks the text currently live on screen so style changes can re-push it
+let liveText = null;
+
+function updateTextStyle() {
+  const size = document.getElementById('font-size').value;
+  document.getElementById('font-size-val').textContent = size;
+  const ls = document.getElementById('line-spacing').value;
+  document.getElementById('line-spacing-val').textContent = parseFloat(ls).toFixed(2);
+  const ws = document.getElementById('word-spacing').value;
+  document.getElementById('word-spacing-val').textContent = ws;
+  const ov = document.getElementById('bg-overlay').value;
+  document.getElementById('bg-overlay-val').textContent = ov + '%';
+
+  textStyle = {
+    ...textStyle,
+    font: document.getElementById('font-select').value,
+    size: parseInt(size),
+    color: document.getElementById('text-color').value,
+    lineSpacing: parseFloat(ls),
+    wordSpacing: parseInt(ws),
+    bgOverlay: parseInt(ov),
+    valign: document.getElementById('valign-select').value,
+    halign: document.getElementById('halign-select').value,
+  };
+
+  updateMiniPreview();
+
+  // Push live update if something is already displayed
+  pushStyleLive();
+}
+
+// Update the mini style preview box in the right panel
+function updateMiniPreview() {
+  const box  = document.getElementById('style-preview-box');
+  const txt  = document.getElementById('style-preview-text');
+  const hint = document.getElementById('style-preview-hint');
+
+  const previewText = liveText || (slides.length > 0 ? slides[currentSlideIdx] : null) || 'Preview';
+
+  // Scale font down proportionally (preview box is ~15% of a 1920px screen width)
+  const scale = (box.offsetWidth || 292) / 1920;
+  const scaledSize = Math.max(8, Math.round(textStyle.size * scale * 5));
+
+  txt.textContent = previewText;
+  txt.style.fontFamily   = textStyle.font;
+  txt.style.fontSize     = scaledSize + 'px';
+  txt.style.fontWeight   = textStyle.bold ? '700' : '400';
+  txt.style.fontStyle    = textStyle.italic ? 'italic' : 'normal';
+  txt.style.color        = textStyle.color;
+  txt.style.textAlign    = textStyle.align;
+  txt.style.lineHeight   = textStyle.lineSpacing;
+  txt.style.wordSpacing  = textStyle.wordSpacing + 'px';
+  txt.style.textShadow   = textStyle.shadow ? '0 1px 4px rgba(0,0,0,0.9)' : 'none';
+  box.style.alignItems   = textStyle.valign;
+  box.style.justifyContent = textStyle.halign;
+  box.style.background = textStyle.bgOverlay > 0
+    ? `rgba(0,0,0,${textStyle.bgOverlay / 100})`
+    : '#000';
+
+  hint.style.display = 'none';
+  txt.style.display = 'block';
+}
+
+function toggleStyle(prop) {
+  textStyle[prop] = !textStyle[prop];
+  const btn = document.getElementById(`${prop}-btn`);
+  if (btn) btn.classList.toggle('active', textStyle[prop]);
+  updateMiniPreview();
+  pushStyleLive();
+}
+
+function setAlign(align) {
+  textStyle.align = align;
+  ['left','center','right'].forEach(a => {
+    const el = document.getElementById(`align-${a}`);
+    if (el) el.classList.toggle('active', a === align);
+  });
+  updateMiniPreview();
+  pushStyleLive();
+}
+
+// Re-sends the currently visible text with the updated style — no slide switch needed
+// MUST NOT call buildContent() here — that would create infinite recursion via updateTextStyle()
+function pushStyleLive() {
+  if (liveText === null) return;
+  let content;
+  if (camFeedActive && selectedCameraId) {
+    content = {
+      type: 'camera-text',
+      deviceId: selectedCameraId,
+      text: liveText,
+      overlayPosition: 'bottom-third',
+      autoDismiss: lowerThirdDuration,
+      style: { ...textStyle },
+      transition: transitionStyle,
+    };
+  } else {
+    content = {
+      type: 'text',
+      text: liveText,
+      style: { ...textStyle },
+      videoPath,
+      videoLooping,
+      transition: transitionStyle,
+    };
+  }
+  const target = syncMode ? null : focusedDisplayId;
+  API.pushContent({ displayId: target, content });
+}
+
+// ── Mode switch ────────────────────────────────────────────────────────────
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('song-panel').classList.toggle('active', mode === 'song');
+  document.getElementById('bible-panel').classList.toggle('active', mode === 'bible');
+  document.getElementById('camera-panel').classList.toggle('active', mode === 'camera');
+  if (mode === 'bible' && Object.keys(bibleDataEn).length === 0) loadBibleData();
+  if (mode === 'camera') refreshCameras();
+}
+
+// ── Song ──────────────────────────────────────────────────────────────────
+function splitByPara() {
+  const txt = document.getElementById('lyrics-input').value;
+  slides = txt.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  renderSlides();
+}
+function splitByLine() {
+  const txt = document.getElementById('lyrics-input').value;
+  slides = txt.split('\n').map(s => s.trim()).filter(Boolean);
+  renderSlides();
+}
+function parseLyrics() {
+  splitByPara();
+  if (slides.length === 0) splitByLine();
+}
+
+function renderSlides() {
+  const c = document.getElementById('slides-container');
+  c.innerHTML = '';
+  slides.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slide-item' + (i === currentSlideIdx ? ' current' : '');
+    el.textContent = s.length > 80 ? s.slice(0, 80) + '…' : s;
+    el.onclick = () => {
+      currentSlideIdx = i;
+      document.querySelectorAll('.slide-item').forEach((e, j) => e.classList.toggle('current', j === i));
+      sendText(slides[i]);
+    };
+    c.appendChild(el);
+  });
+}
+
+// ── Bible ─────────────────────────────────────────────────────────────────
+async function loadBibleData() {
+  const setStatus = (msg) => {
+    const el = document.getElementById('bible-status');
+    if (el) el.textContent = msg;
+  };
+  setStatus('Loading…');
+  try {
+    const [enRes, teRes] = await Promise.all([
+      fetch('./bible_full.json'),
+      fetch('./telugu_bible.json'),
+    ]);
+    const enJson = await enRes.json();
+    const teJson = await teRes.json();
+
+    bibleDataEn = {};
+    bibleDataTe = {};
+    bibleBooks  = [];
+
+    enJson.books.forEach(book => {
+      bibleBooks.push({ english: book.name_english, telugu: book.name_telugu });
+      bibleDataEn[book.name_english] = {};
+      book.chapters.forEach(ch => {
+        bibleDataEn[book.name_english][ch.chapter] = {};
+        ch.verses.forEach(v => { bibleDataEn[book.name_english][ch.chapter][v.verse] = v.text_english; });
+      });
+    });
+
+    teJson.books.forEach(book => {
+      bibleDataTe[book.name_english] = {};
+      book.chapters.forEach(ch => {
+        bibleDataTe[book.name_english][ch.chapter] = {};
+        ch.verses.forEach(v => { bibleDataTe[book.name_english][ch.chapter][v.verse] = v.text_telugu; });
+      });
+    });
+
+  } catch (e) { setStatus('Could not load Bible: ' + e.message); return; }
+
+  const statusEl = document.getElementById('bible-status');
+  if (statusEl) statusEl.remove();
+  populateBibleBooks();
+}
+
+function getBibleData() {
+  return bibleLang === 'telugu' ? bibleDataTe : bibleDataEn;
+}
+
+function setBibleLang(lang) {
+  bibleLang = lang;
+  document.getElementById('btn-english').className = 'btn' + (lang === 'english' ? ' active-btn' : '');
+  document.getElementById('btn-telugu').className  = 'btn' + (lang === 'telugu'  ? ' active-btn' : '');
+  populateBibleBooks();
+}
+
+function populateBibleBooks() {
+  const sel = document.getElementById('bible-book');
+  const prevBook = selBook;
+  sel.innerHTML = '';
+  bibleBooks.forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.english;
+    o.textContent = bibleLang === 'telugu' ? b.telugu : b.english;
+    sel.appendChild(o);
+  });
+  if (prevBook) sel.value = prevBook;
+  selBook = sel.value || (bibleBooks[0] ? bibleBooks[0].english : '');
+  if (selBook) loadChapters();
+}
+
+function loadChapters() {
+  selBook = document.getElementById('bible-book').value;
+  const chapters = Object.keys(getBibleData()[selBook] || {}).map(Number).sort((a,b)=>a-b);
+  const grid = document.getElementById('chapter-grid');
+  grid.innerHTML = '';
+  chapters.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'ch-btn' + (ch === selChapter ? ' sel' : '');
+    btn.textContent = ch;
+    btn.onclick = () => selectChapter(ch);
+    grid.appendChild(btn);
+  });
+  if (chapters.length > 0) selectChapter(chapters[0]);
+}
+
+function selectChapter(ch) {
+  selChapter = ch;
+  document.querySelectorAll('.ch-btn').forEach(b => b.classList.toggle('sel', parseInt(b.textContent) === ch));
+  const verses = getBibleData()[selBook]?.[ch] || {};
+  const verseNums = Object.keys(verses).map(Number).sort((a,b)=>a-b);
+
+  const vGrid = document.getElementById('verse-num-grid');
+  const container = document.getElementById('bible-verse-slides');
+  vGrid.innerHTML = '';
+  container.innerHTML = '';
+
+  const slideDivs = {};
+  const numBtns = {};
+
+  function highlightVerse(v) {
+    Object.values(numBtns).forEach(b => b.classList.remove('sel'));
+    Object.values(slideDivs).forEach(d => d.classList.remove('current'));
+    if (numBtns[v]) numBtns[v].classList.add('sel');
+    if (slideDivs[v]) slideDivs[v].classList.add('current');
+  }
+
+  verseNums.forEach(v => {
+    const text = verses[v];
+    const ref = `${selBook} ${ch}:${v}`;
+
+    // Verse number button
+    const btn = document.createElement('button');
+    btn.className = 'ch-btn';
+    btn.textContent = v;
+    btn.onclick = () => {
+      highlightVerse(v);
+      slideDivs[v]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      sendVerseToScreen(text, ref);
+    };
+    numBtns[v] = btn;
+    vGrid.appendChild(btn);
+
+    // Slide card
+    const div = document.createElement('div');
+    div.className = 'slide-item';
+    const numBadge = document.createElement('div');
+    numBadge.style.cssText = 'font-size:10px;font-weight:700;color:var(--gold);margin-bottom:5px';
+    numBadge.textContent = v;
+    const textLine = document.createElement('div');
+    textLine.textContent = text;
+    div.appendChild(numBadge);
+    div.appendChild(textLine);
+    div.onclick = () => { highlightVerse(v); sendVerseToScreen(text, ref); };
+    slideDivs[v] = div;
+    container.appendChild(div);
+  });
+}
+
+function sendVerseToScreen(text, ref) {
+  lastVerseText = text;
+  lastVerseRef  = ref;
+  if (camFeedActive && selectedCameraId) {
+    liveText = text;
+    const target = syncMode ? null : focusedDisplayId;
+    API.pushContent({
+      displayId: target,
+      content: {
+        type: 'camera-text',
+        deviceId: selectedCameraId,
+        text,
+        textRef: ref,
+        overlayPosition: 'bottom-third',
+        autoDismiss: lowerThirdDuration,
+        style: { ...textStyle },
+        transition: transitionStyle,
+      }
+    });
+    updateLiveStatus();
+    return;
+  }
+  sendText(`${text}\n— ${ref}`);
+}
+
+// ── Content Pushing ───────────────────────────────────────────────────────
+// textStyle is always current — every input calls updateTextStyle() via oninput.
+// Do NOT call updateTextStyle() here; it would recurse through pushStyleLive().
+function buildContent(text) {
+  if (camFeedActive && selectedCameraId) {
+    return {
+      type: 'camera-text',
+      deviceId: selectedCameraId,
+      text,
+      overlayPosition: 'bottom-third',
+      autoDismiss: lowerThirdDuration,
+      style: { ...textStyle },
+      transition: transitionStyle,
+    };
+  }
+  return {
+    type: 'text',
+    text,
+    style: { ...textStyle },
+    videoPath,
+    videoLooping,
+    transition: transitionStyle,
+  };
+}
+
+function sendText(text) {
+  liveText = text;
+  updateMiniPreview();
+  const content = buildContent(text);
+  const target = syncMode ? null : focusedDisplayId;
+  API.pushContent({ displayId: target, content });
+  updateLiveStatus();
+}
+
+function presentContent() {
+  let text = '';
+  if (slides.length > 0) {
+    text = slides[currentSlideIdx] || slides[0];
+  } else {
+    text = document.getElementById('lyrics-input').value.trim();
+  }
+  if (!text) text = '(No content selected)';
+  sendText(text);
+}
+
+function blankAll() {
+  liveText = null;
+  if (camFeedActive) {
+    camFeedActive = false;
+    document.getElementById('cam-feed-btn')?.classList.remove('live');
+  }
+  API.blankDisplay(null);
+  updateLiveStatus();
+}
+
+function clearText() {
+  liveText = null;
+  const target = syncMode ? null : focusedDisplayId;
+  API.pushContent({ displayId: target, content: { type: 'clear-text' } });
+}
+function blankOne(displayId) {
+  API.blankDisplay(displayId);
+}
+
+// ── Video ─────────────────────────────────────────────────────────────────
+async function pickVideo() {
+  const p = await API.pickFile({ filters: [{ name: 'Video', extensions: ['mp4','webm','mov','mkv'] }] });
+  if (!p) return;
+  videoPath = p;
+  const name = p.split(/[\\/]/).pop();
+  const nameEl = document.getElementById('video-name');
+  nameEl.textContent = name;
+  nameEl.style.display = 'block';
+  document.getElementById('video-upload-zone').style.borderColor = 'var(--gold-dim)';
+}
+
+function toggleVideoLoop() {
+  videoLooping = !videoLooping;
+  const btn = document.getElementById('video-toggle-btn');
+  btn.style.color = videoLooping ? 'var(--green)' : 'var(--text2)';
+}
+
+function removeBackground() {
+  videoPath = null;
+  document.getElementById('video-name').style.display = 'none';
+  document.getElementById('video-upload-zone').style.borderColor = '';
+  API.pushContent({ displayId: null, content: { type: 'clear-bg' } });
+}
+
+// ── Logo ──────────────────────────────────────────────────────────────────
+async function pickLogo() {
+  const p = await API.pickFile({ filters: [{ name: 'Image', extensions: ['png','jpg','jpeg','gif','webp','svg'] }] });
+  if (!p) return;
+  logoPath = p;
+  const name = p.split(/[\\/]/).pop();
+  const nameEl = document.getElementById('logo-name');
+  nameEl.textContent = name;
+  nameEl.style.display = 'block';
+  document.getElementById('logo-upload-zone').style.borderColor = 'var(--gold-dim)';
+}
+
+async function pushLogo() {
+  if (!logoPath) { await pickLogo(); if (!logoPath) return; }
+  const size    = parseInt(document.getElementById('logo-size').value);
+  const valign  = document.getElementById('logo-valign').value;
+  const halign  = document.getElementById('logo-halign').value;
+  const target  = syncMode ? null : focusedDisplayId;
+  await API.showLogo({ displayId: target, logoPath, size, valign, halign });
+}
+
+async function updateLogoLive() {
+  const size = parseInt(document.getElementById('logo-size').value);
+  document.getElementById('logo-size-val').textContent = size + '%';
+  if (!logoPath) return;
+  await pushLogo();
+}
+
+async function pushLogoFull() {
+  if (!logoPath) { await pickLogo(); if (!logoPath) return; }
+  const target = syncMode ? null : focusedDisplayId;
+  await API.showLogo({ displayId: target, logoPath, size: 45, valign: 'center', halign: 'center', hideText: true });
+}
+
+function removeLogo() {
+  logoPath = null;
+  document.getElementById('logo-name').style.display = 'none';
+  document.getElementById('logo-upload-zone').style.borderColor = '';
+  API.pushContent({ displayId: null, content: { type: 'clear-logo' } });
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+    e.preventDefault();
+    if (currentSlideIdx < slides.length - 1) {
+      currentSlideIdx++;
+      renderSlides();
+      sendText(slides[currentSlideIdx]);
+    }
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+    e.preventDefault();
+    if (currentSlideIdx > 0) {
+      currentSlideIdx--;
+      renderSlides();
+      sendText(slides[currentSlideIdx]);
+    }
+  }
+  if (e.key === 'b' || e.key === 'B') blankAll();
+  if (e.key === 'p' || e.key === 'P') presentContent();
+  if (e.key === 'c' || e.key === 'C') toggleCamFeed();
+  if (e.key === 'v' || e.key === 'V') { if (lastVerseText) sendVerseToScreen(lastVerseText, lastVerseRef); }
+  if (e.key === 'l' || e.key === 'L') presentContent();
+  if (e.key === 'Escape') blankAll();
+});
+
+// ── Camera ─────────────────────────────────────────────────────────────────
+
+let cameraDevices = [];
+let selectedCameraId = null;
+let ctrlPreviewStream = null;
+let lowerThirdDuration = 0;    // 0 = manual (no auto-dismiss)
+let transitionStyle = 'fade';  // 'fade' | 'cut'
+let activeScene = null;        // 'camera' | 'verse' | 'lyrics' | 'blank' | null
+let lastVerseText = null;
+let lastVerseRef  = null;
+let camFeedActive = false;
+
+async function refreshCameras() {
+  try {
+    // Trigger permissions prompt if not yet granted
+    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .catch(() => null);
+    if (tempStream) tempStream.getTracks().forEach(t => t.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    cameraDevices = devices.filter(d => d.kind === 'videoinput');
+    renderCameraList();
+  } catch (err) {
+    console.error('Camera enum error:', err);
+    document.getElementById('camera-device-list').innerHTML =
+      '<div style="color:var(--red);font-size:11px;padding:8px 0">Camera access denied. Check permissions.</div>';
+  }
+}
+
+function renderCameraList() {
+  const list = document.getElementById('camera-device-list');
+  if (cameraDevices.length === 0) {
+    list.innerHTML = '<div style="color:var(--text2);font-size:11px;padding:8px 0">No cameras found.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  cameraDevices.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'camera-device-item' + (d.deviceId === selectedCameraId ? ' selected' : '');
+    item.dataset.id = d.deviceId;
+
+    const type = d.label.toLowerCase().includes('usb') ? 'USB'
+               : d.label.toLowerCase().includes('built') ? 'Built-in'
+               : d.label.includes('0x') ? 'Capture Card'
+               : 'Camera';
+
+    item.innerHTML = `
+      <div class="cam-icon">📷</div>
+      <div class="cam-info">
+        <div class="cam-name">${d.label || `Camera ${cameraDevices.indexOf(d) + 1}`}</div>
+        <div class="cam-type">${type}</div>
+      </div>
+      <div class="cam-dot"></div>
+    `;
+    item.onclick = () => selectCamera(d.deviceId);
+    list.appendChild(item);
+  });
+}
+
+async function selectCamera(deviceId) {
+  selectedCameraId = deviceId;
+  renderCameraList();
+  startCtrlPreview(deviceId);
+}
+
+async function startCtrlPreview(deviceId) {
+  // Stop existing ctrl preview
+  if (ctrlPreviewStream) {
+    ctrlPreviewStream.getTracks().forEach(t => t.stop());
+    ctrlPreviewStream = null;
+  }
+
+  const vid = document.getElementById('cam-ctrl-preview');
+  const ph  = document.getElementById('cam-preview-ph');
+  const res = document.getElementById('cam-res-badge');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId } },
+      audio: false,
+    });
+    ctrlPreviewStream = stream;
+    vid.srcObject = stream;
+    vid.style.display = 'block';
+    ph.style.display  = 'none';
+
+    // Show resolution once metadata loaded
+    vid.onloadedmetadata = () => {
+      const w = vid.videoWidth;
+      const h = vid.videoHeight;
+      const label = h >= 2160 ? '4K' : h >= 1080 ? '1080p' : h >= 720 ? '720p' : `${w}×${h}`;
+      res.textContent = label;
+      res.style.display = 'block';
+    };
+  } catch (err) {
+    console.error('Preview error:', err);
+    vid.style.display = 'none';
+    ph.style.display  = 'flex';
+  }
+}
+
+function cameraGoLive() {
+  toggleCamFeed();
+}
+
+function toggleCamFeed() {
+  if (!selectedCameraId) {
+    switchMode('camera');
+    return;
+  }
+  camFeedActive = !camFeedActive;
+  const btn = document.getElementById('cam-feed-btn');
+  const target = syncMode ? null : focusedDisplayId;
+
+  if (camFeedActive) {
+    btn.classList.add('live');
+    API.pushContent({ displayId: target, content: { type: 'camera', deviceId: selectedCameraId, transition: transitionStyle } });
+  } else {
+    btn.classList.remove('live');
+    liveText = null;
+    API.pushContent({ displayId: target, content: { type: 'clear-camera', transition: transitionStyle } });
+  }
+  updateLiveStatus();
+}
+
+function setLTDuration(secs) {
+  lowerThirdDuration = secs;
+  ['5s','10s','15s','man'].forEach(id => {
+    const el = document.getElementById(`lt-${id}`);
+    if (el) {
+      const val = id === 'man' ? 0 : parseInt(id);
+      el.classList.toggle('active', val === secs);
+    }
+  });
+}
+
+function setTransition(style) {
+  transitionStyle = style;
+  // Update --fade CSS var on presentation side (can't do cross-window but we control fade duration)
+}
+
+// ── Scene Switcher ─────────────────────────────────────────────────────────
+
+function activateScene(scene) {
+  activeScene = scene;
+
+  // Update button highlights
+  ['camera','verse','lyrics','blank'].forEach(s => {
+    const el = document.getElementById(`scene-${s}`);
+    if (el) el.classList.toggle('active-scene', s === scene);
+  });
+
+  const target = syncMode ? null : focusedDisplayId;
+
+  switch (scene) {
+
+    case 'camera': {
+      if (!selectedCameraId) { switchMode('camera'); return; }
+      liveText = null;
+      API.pushContent({ displayId: target, content: { type: 'camera', deviceId: selectedCameraId, transition: transitionStyle } });
+      updateLiveStatus();
+      break;
+    }
+
+    case 'verse': {
+      // Camera stays running; put last verse as lower-third
+      if (!lastVerseText) {
+        if (!selBook || !selChapter) { switchMode('bible'); return; }
+        const firstVerseNum = Object.keys(getBibleData()[selBook]?.[selChapter] || {}).map(Number).sort((a,b)=>a-b)[0];
+        if (!firstVerseNum) { switchMode('bible'); return; }
+        lastVerseText = getBibleData()[selBook][selChapter][firstVerseNum] || '';
+        lastVerseRef  = `${selBook} ${selChapter}:${firstVerseNum}`;
+        if (!lastVerseText) { switchMode('bible'); return; }
+      }
+      if (!camFeedActive || !selectedCameraId) {
+        // Camera not live — send as normal text
+        sendText(lastVerseText);
+        return;
+      }
+      API.pushContent({
+        displayId: target,
+        content: {
+          type: 'camera-text',
+          deviceId: selectedCameraId,
+          text: lastVerseText,
+          textRef: lastVerseRef,
+          overlayPosition: 'bottom-third',
+          autoDismiss: lowerThirdDuration,
+          style: { ...textStyle },
+          transition: transitionStyle,
+        }
+      });
+      updateLiveStatus();
+      break;
+    }
+
+    case 'lyrics': {
+      const text = slides.length > 0
+        ? (slides[currentSlideIdx] || slides[0])
+        : document.getElementById('lyrics-input').value.trim();
+      if (!text) return;
+      if (!selectedCameraId) { sendText(text); return; }
+      API.pushContent({
+        displayId: target,
+        content: {
+          type: 'camera-text',
+          deviceId: selectedCameraId,
+          text,
+          overlayPosition: 'bottom-third',
+          autoDismiss: lowerThirdDuration,
+          style: { ...textStyle },
+          transition: transitionStyle,
+        }
+      });
+      liveText = text;
+      updateLiveStatus();
+      break;
+    }
+
+    case 'blank': {
+      liveText = null;
+      API.blankDisplay(null);
+      updateLiveStatus();
+      break;
+    }
+  }
+}
+
+// ── Events from main ──────────────────────────────────────────────────────
+API.on('displays-changed', () => loadDisplays());
+API.on('display-closed', (id) => {
+  selectedIds.delete(id);
+  renderScreenTabs();
+  renderPreviews();
+  updateLiveStatus();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadDisplays();
+loadBibleData();
+</script>
+</body>
+</html>

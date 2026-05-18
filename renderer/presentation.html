@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>GloryBoard — Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Raleway:wght@300;400;600;700&family=Open+Sans:wght@300;400;600&family=Merriweather:ital,wght@0,300;0,700;1,300&family=Montserrat:wght@300;400;600;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/*
+ * Layer stack (z-index):
+ *   0 — background video (pre-recorded loop)
+ *   1 — camera feed video (live)
+ *   2 — dark overlay (dimming / text readability)
+ *   3 — text stage (lyrics / verse centered / top)
+ *   3 — lower-third strip (verse in bottom 25%)
+ *   4 — logo
+ *  20 — blank overlay
+ *  25 — camera-disconnect warning
+ */
+
+#bg-video {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  display: none;
+  transition: opacity var(--fade) ease;
+}
+
+#camera-video {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  display: none;
+  transition: opacity var(--fade) ease;
+}
+
+#bg-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0);
+  z-index: 2;
+  pointer-events: none;
+  transition: background 0.4s;
+}
+
+#stage {
+  position: fixed; inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  transition: opacity var(--fade) ease;
+}
+
+#text-block {
+  max-width: 90%;
+  text-align: center;
+  color: #fff;
+  line-height: 1.3;
+  word-break: break-word;
+  white-space: pre-wrap;
+  transition: opacity 0.25s ease;
+}
+
+/* ── Lower Third ─────────────────────────────────────────────────────────── */
+#lower-third {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 3;
+  display: none;
+  flex-direction: column;
+  padding: 0 60px 40px;
+  background: linear-gradient(to top,
+    rgba(0,0,0,0.88) 0%,
+    rgba(0,0,0,0.65) 60%,
+    transparent 100%);
+  transform: translateY(100%);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.5s ease;
+}
+#lower-third.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+#lower-third-text {
+  font-size: 52px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.95);
+  line-height: 1.25;
+}
+#lower-third-ref {
+  font-size: 28px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.72);
+  margin-top: 6px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+  text-align: right;
+}
+
+/* ── Logo ────────────────────────────────────────────────────────────────── */
+#logo-el {
+  position: fixed;
+  z-index: 4;
+  max-width: 20%; max-height: 20%;
+  object-fit: contain;
+  display: none;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+  transition: all 0.4s ease;
+}
+#logo-el.corner { top: 24px; left: 24px; }
+#logo-el.center { top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+/* ── Blank overlay ───────────────────────────────────────────────────────── */
+#blank-overlay {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 20;
+  display: none;
+}
+
+/* ── Camera disconnect warning ───────────────────────────────────────────── */
+#camera-warn {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 25;
+  background: rgba(212,74,74,0.92);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  display: none;
+  animation: pulse-warn 1s ease-in-out infinite alternate;
+}
+@keyframes pulse-warn {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
+}
+
+/* ── Fade-in animation ───────────────────────────────────────────────────── */
+:root { --fade: 300ms; }
+.fade-enter { animation: fadeIn 0.35s ease forwards; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<video id="bg-video"     loop playsinline autoplay muted></video>
+<video id="camera-video" playsinline autoplay muted></video>
+<div id="bg-overlay"></div>
+
+<div id="stage">
+  <div id="text-block"></div>
+</div>
+
+<div id="lower-third">
+  <div id="lower-third-text"></div>
+  <div id="lower-third-ref"></div>
+</div>
+
+<img  id="logo-el" src="" alt="logo" />
+<div id="blank-overlay"></div>
+<div id="camera-warn">⚠ Camera Disconnected — Screen Blanked</div>
+
+<script>
+const API = window.gloryAPI;
+
+const bgVideo     = document.getElementById('bg-video');
+const camVideo    = document.getElementById('camera-video');
+const bgOverlay   = document.getElementById('bg-overlay');
+const stage       = document.getElementById('stage');
+const textBlock   = document.getElementById('text-block');
+const logoEl      = document.getElementById('logo-el');
+const blankOv     = document.getElementById('blank-overlay');
+const lowerThird  = document.getElementById('lower-third');
+const ltText      = document.getElementById('lower-third-text');
+const ltRef       = document.getElementById('lower-third-ref');
+const cameraWarn  = document.getElementById('camera-warn');
+
+let currentLogoPath      = null;
+let activeCameraStream   = null;
+let activeCameraDeviceId = null;
+let lowerThirdTimer      = null;
+
+// ── Camera ────────────────────────────────────────────────────────────────
+
+async function startCamera(deviceId) {
+  if (activeCameraDeviceId === deviceId && activeCameraStream) return;
+  stopCamera();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: deviceId ? { deviceId: { exact: deviceId } } : true,
+      audio: false,
+    });
+    activeCameraStream   = stream;
+    activeCameraDeviceId = deviceId;
+    camVideo.srcObject   = stream;
+    camVideo.style.display = 'block';
+    cameraWarn.style.display = 'none';
+
+    stream.getVideoTracks().forEach(t => {
+      t.addEventListener('ended', onCameraDisconnect);
+    });
+  } catch (err) {
+    console.error('Camera access failed:', err);
+    onCameraDisconnect();
+  }
+}
+
+function stopCamera() {
+  if (activeCameraStream) {
+    activeCameraStream.getTracks().forEach(t => t.stop());
+    activeCameraStream = null;
+  }
+  camVideo.srcObject = null;
+  camVideo.style.display = 'none';
+  activeCameraDeviceId = null;
+}
+
+function onCameraDisconnect() {
+  stopCamera();
+  cameraWarn.style.display = 'block';
+  blankOv.style.display = 'block';       // auto-fallback to blank
+  setTimeout(() => { cameraWarn.style.display = 'none'; }, 8000);
+}
+
+// ── Lower Third ───────────────────────────────────────────────────────────
+
+function applyLowerThirdStyle(style) {
+  if (!style) return;
+  ltText.style.fontFamily  = style.font         || 'DM Sans, sans-serif';
+  ltText.style.fontSize    = `${style.size || 52}px`;
+  ltText.style.fontWeight  = style.bold          ? '700' : '400';
+  ltText.style.fontStyle   = style.italic        ? 'italic' : 'normal';
+  ltText.style.color       = style.color         || '#ffffff';
+  ltText.style.textAlign   = style.align         || 'left';
+  ltText.style.lineHeight  = style.lineSpacing   || 1.25;
+  ltText.style.wordSpacing = `${style.wordSpacing || 0}px`;
+  ltText.style.textShadow  = style.shadow
+    ? '0 2px 20px rgba(0,0,0,0.95)'
+    : 'none';
+}
+
+function showLowerThird(text, ref, duration, style) {
+  const alreadyVisible = lowerThird.classList.contains('visible');
+  clearLowerThirdTimer();
+
+  applyLowerThirdStyle(style);
+  ltText.textContent = text || '';
+  ltRef.textContent  = ref  ? `— ${ref}` : '';
+
+  if (!alreadyVisible) {
+    lowerThird.style.display = 'flex';
+    requestAnimationFrame(() => lowerThird.classList.add('visible'));
+  }
+
+  if (duration && duration > 0) {
+    lowerThirdTimer = setTimeout(hideLowerThird, duration * 1000);
+  }
+}
+
+function hideLowerThird() {
+  clearLowerThirdTimer();
+  lowerThird.classList.remove('visible');
+  setTimeout(() => { lowerThird.style.display = 'none'; }, 560);
+}
+
+function clearLowerThirdTimer() {
+  if (lowerThirdTimer) { clearTimeout(lowerThirdTimer); lowerThirdTimer = null; }
+}
+
+// ── Content Router ────────────────────────────────────────────────────────
+
+function applyContent(content) {
+  if (!content) return;
+
+  // Apply transition style before any visual change
+  document.documentElement.style.setProperty('--fade', content.transition === 'cut' ? '0ms' : '300ms');
+
+  switch (content.type) {
+
+    // ── Blank everything ─────────────────────────────────────────────────
+    case 'blank':
+      blankOv.style.display = 'block';
+      hideLowerThird();
+      break;
+
+    case 'clear-bg':
+      bgVideo.src = '';
+      bgVideo.style.display = 'none';
+      break;
+
+    case 'clear-logo':
+      logoEl.style.display = 'none';
+      break;
+
+    case 'clear-text':
+      stage.style.opacity = '0';
+      hideLowerThird();
+      break;
+
+    case 'logo':
+      showLogo(content);
+      break;
+
+    // ── Camera feed, no text ─────────────────────────────────────────────
+    case 'camera': {
+      blankOv.style.display = 'none';
+      bgVideo.pause();
+      bgVideo.style.display = 'none';
+      bgOverlay.style.background = 'rgba(0,0,0,0)';
+      stage.style.opacity = '0';
+      hideLowerThird();
+      startCamera(content.deviceId);
+      break;
+    }
+
+    // ── Camera feed + text overlay ───────────────────────────────────────
+    case 'camera-text': {
+      blankOv.style.display = 'none';
+
+      if (content.deviceId !== activeCameraDeviceId || !activeCameraStream) {
+        startCamera(content.deviceId);
+      }
+
+      if (content.overlayPosition === 'bottom-third') {
+        // Animated lower-third strip
+        stage.style.opacity = '0';
+        bgOverlay.style.background = 'rgba(0,0,0,0)';
+        showLowerThird(
+          content.text,
+          content.textRef,
+          content.autoDismiss || 0,
+          content.style
+        );
+      } else {
+        // Full-screen text overlay (center / top / bottom)
+        hideLowerThird();
+        const pos = content.overlayPosition || 'center';
+        stage.style.alignItems     = pos === 'top' ? 'flex-start' : pos === 'bottom' ? 'flex-end' : 'center';
+        stage.style.justifyContent = 'center';
+        stage.style.opacity = '1';
+        bgOverlay.style.background = 'rgba(0,0,0,0.45)';
+        applyTextStyle(content.text, content.style);
+      }
+      break;
+    }
+
+    // ── Remove camera, restore text/video mode ───────────────────────────
+    case 'clear-camera': {
+      stopCamera();
+      hideLowerThird();
+      stage.style.opacity = '1';
+      bgOverlay.style.background = 'rgba(0,0,0,0)';
+      break;
+    }
+
+    // ── Text with optional background video (existing behaviour) ─────────
+    case 'text': {
+      blankOv.style.display = 'none';
+      stage.style.opacity = '1';
+      hideLowerThird();
+
+      if (content.videoPath) {
+        if (content.videoPath !== bgVideo.dataset.src) {
+          bgVideo.src = `file://${content.videoPath}`;
+          bgVideo.dataset.src = content.videoPath;
+          bgVideo.loop = content.videoLooping !== false;
+        }
+        bgVideo.style.display = 'block';
+        bgVideo.play().catch(() => {});
+      } else {
+        bgVideo.style.display = 'none';
+        bgVideo.src = '';
+        bgVideo.dataset.src = '';
+      }
+
+      const ov = content.style?.bgOverlay || 0;
+      bgOverlay.style.background = `rgba(0,0,0,${ov / 100})`;
+
+      applyTextStyle(content.text, content.style);
+      break;
+    }
+  }
+}
+
+function applyTextStyle(text, style) {
+  if (!style) { textBlock.textContent = text || ''; return; }
+
+  stage.style.alignItems     = style.valign  || 'center';
+  stage.style.justifyContent = style.halign  || 'center';
+
+  textBlock.style.fontFamily  = style.font         || 'DM Sans, sans-serif';
+  textBlock.style.fontSize    = `${style.size || 52}px`;
+  textBlock.style.fontWeight  = style.bold   ? '700' : '400';
+  textBlock.style.fontStyle   = style.italic ? 'italic' : 'normal';
+  textBlock.style.color       = style.color        || '#ffffff';
+  textBlock.style.textAlign   = style.align        || 'center';
+  textBlock.style.lineHeight  = style.lineSpacing  || 1.3;
+  textBlock.style.wordSpacing = `${style.wordSpacing || 0}px`;
+  textBlock.style.textShadow  = style.shadow
+    ? '0 2px 16px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6)'
+    : 'none';
+
+  textBlock.classList.remove('fade-enter');
+  void textBlock.offsetWidth;
+  textBlock.textContent = text || '';
+  textBlock.classList.add('fade-enter');
+}
+
+async function showLogo(content) {
+  blankOv.style.display = 'none';
+  const { logoPath, size, valign, halign, hideText } = content;
+
+  if (hideText) {
+    stage.style.opacity = '0';
+    hideLowerThird();
+  }
+
+  if (logoPath && logoPath !== currentLogoPath) {
+    const b64 = await API.readFileBase64(logoPath);
+    if (b64) { logoEl.src = b64; currentLogoPath = logoPath; }
+  }
+
+  const pct = size || 15;
+  logoEl.style.maxWidth  = `${pct}%`;
+  logoEl.style.maxHeight = `${pct}%`;
+
+  // Position using valign / halign dropdowns
+  const v = valign || 'top';
+  const h = halign || 'left';
+  logoEl.className = '';
+  logoEl.style.top    = v === 'top'    ? '24px' : v === 'center' ? '50%' : 'auto';
+  logoEl.style.bottom = v === 'bottom' ? '24px' : 'auto';
+  logoEl.style.left   = h === 'left'   ? '24px' : h === 'center' ? '50%' : 'auto';
+  logoEl.style.right  = h === 'right'  ? '24px' : 'auto';
+  logoEl.style.transform =
+    (v === 'center' && h === 'center') ? 'translate(-50%,-50%)' :
+    v === 'center'                     ? 'translateY(-50%)'     :
+    h === 'center'                     ? 'translateX(-50%)'     : 'none';
+
+  logoEl.style.display = 'block';
+}
+
+// ── IPC ───────────────────────────────────────────────────────────────────
+API.on('show-content', applyContent);
+API.on('display-info', (info) => {
+  console.log('Presentation on display', info.displayId);
+});
+</script>
+</body>
+</html>

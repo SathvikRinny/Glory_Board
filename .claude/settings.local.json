@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(js|html|css|vue|jsx|ts|tsx\\)$')",
+      "Bash(node -e \"const fs=require\\('fs'\\); const d=fs.readFileSync\\('C:/Users/rinny/Downloads/rinny/gloryboard_camera/bible_full.json','utf8'\\); const j=JSON.parse\\(d\\); console.log\\('books count:', j.books.length\\); console.log\\('first book:', j.books[0].name_english\\); console.log\\('chapters in book 1:', j.books[0].chapters.length\\); console.log\\('verse 1 of ch 1:', j.books[0].chapters[0].verses[0]\\);\")",
+      "Bash(node -e \"require\\('pdf-parse'\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e ' *)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(python -c \"import pdfplumber\")",
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(python scrape_telugu_bible.py)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(Get-ChildItem -Path \"D:\\\\for chruch\\\\gloryboard_camera\" -Recurse -File)",
+      "Bash(Select-Object -First 50 FullName)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"D:\\\\for chruch\\\\gloryboard_camera\\\\.github\\\\workflows\")"
+    ]
+  }
+}
