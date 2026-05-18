@@ -74,44 +74,6 @@ html, body {
   transition: opacity 0.25s ease;
 }
 
-/* ── Lower Third ─────────────────────────────────────────────────────────── */
-#lower-third {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 3;
-  display: none;
-  flex-direction: column;
-  padding: 0 60px 40px;
-  background: linear-gradient(to top,
-    rgba(0,0,0,0.88) 0%,
-    rgba(0,0,0,0.65) 60%,
-    transparent 100%);
-  transform: translateY(100%);
-  opacity: 0;
-  transition:
-    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    opacity 0.5s ease;
-}
-#lower-third.visible {
-  transform: translateY(0);
-  opacity: 1;
-}
-#lower-third-text {
-  font-size: 52px;
-  font-weight: 600;
-  color: #fff;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.95);
-  line-height: 1.25;
-}
-#lower-third-ref {
-  font-size: 28px;
-  font-weight: 400;
-  color: rgba(255,255,255,0.72);
-  margin-top: 6px;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
-  text-align: right;
-}
-
 /* ── Logo ────────────────────────────────────────────────────────────────── */
 #logo-el {
   position: fixed;
@@ -170,11 +132,6 @@ html, body {
   <div id="text-block"></div>
 </div>
 
-<div id="lower-third">
-  <div id="lower-third-text"></div>
-  <div id="lower-third-ref"></div>
-</div>
-
 <img  id="logo-el" src="" alt="logo" />
 <div id="blank-overlay"></div>
 <div id="camera-warn">⚠ Camera Disconnected — Screen Blanked</div>
@@ -189,15 +146,11 @@ const stage       = document.getElementById('stage');
 const textBlock   = document.getElementById('text-block');
 const logoEl      = document.getElementById('logo-el');
 const blankOv     = document.getElementById('blank-overlay');
-const lowerThird  = document.getElementById('lower-third');
-const ltText      = document.getElementById('lower-third-text');
-const ltRef       = document.getElementById('lower-third-ref');
 const cameraWarn  = document.getElementById('camera-warn');
 
 let currentLogoPath      = null;
 let activeCameraStream   = null;
 let activeCameraDeviceId = null;
-let lowerThirdTimer      = null;
 
 // ── Camera ────────────────────────────────────────────────────────────────
 
@@ -242,51 +195,6 @@ function onCameraDisconnect() {
   setTimeout(() => { cameraWarn.style.display = 'none'; }, 8000);
 }
 
-// ── Lower Third ───────────────────────────────────────────────────────────
-
-function applyLowerThirdStyle(style) {
-  if (!style) return;
-  ltText.style.fontFamily  = style.font         || 'DM Sans, sans-serif';
-  ltText.style.fontSize    = `${style.size || 52}px`;
-  ltText.style.fontWeight  = style.bold          ? '700' : '400';
-  ltText.style.fontStyle   = style.italic        ? 'italic' : 'normal';
-  ltText.style.color       = style.color         || '#ffffff';
-  ltText.style.textAlign   = style.align         || 'left';
-  ltText.style.lineHeight  = style.lineSpacing   || 1.25;
-  ltText.style.wordSpacing = `${style.wordSpacing || 0}px`;
-  ltText.style.textShadow  = style.shadow
-    ? '0 2px 20px rgba(0,0,0,0.95)'
-    : 'none';
-}
-
-function showLowerThird(text, ref, duration, style) {
-  const alreadyVisible = lowerThird.classList.contains('visible');
-  clearLowerThirdTimer();
-
-  applyLowerThirdStyle(style);
-  ltText.textContent = text || '';
-  ltRef.textContent  = ref  ? `— ${ref}` : '';
-
-  if (!alreadyVisible) {
-    lowerThird.style.display = 'flex';
-    requestAnimationFrame(() => lowerThird.classList.add('visible'));
-  }
-
-  if (duration && duration > 0) {
-    lowerThirdTimer = setTimeout(hideLowerThird, duration * 1000);
-  }
-}
-
-function hideLowerThird() {
-  clearLowerThirdTimer();
-  lowerThird.classList.remove('visible');
-  setTimeout(() => { lowerThird.style.display = 'none'; }, 560);
-}
-
-function clearLowerThirdTimer() {
-  if (lowerThirdTimer) { clearTimeout(lowerThirdTimer); lowerThirdTimer = null; }
-}
-
 // ── Content Router ────────────────────────────────────────────────────────
 
 function applyContent(content) {
@@ -300,7 +208,6 @@ function applyContent(content) {
     // ── Blank everything ─────────────────────────────────────────────────
     case 'blank':
       blankOv.style.display = 'block';
-      hideLowerThird();
       break;
 
     case 'clear-bg':
@@ -314,7 +221,6 @@ function applyContent(content) {
 
     case 'clear-text':
       stage.style.opacity = '0';
-      hideLowerThird();
       break;
 
     case 'logo':
@@ -328,56 +234,22 @@ function applyContent(content) {
       bgVideo.style.display = 'none';
       bgOverlay.style.background = 'rgba(0,0,0,0)';
       stage.style.opacity = '0';
-      hideLowerThird();
       startCamera(content.deviceId);
-      break;
-    }
-
-    // ── Camera feed + text overlay ───────────────────────────────────────
-    case 'camera-text': {
-      blankOv.style.display = 'none';
-
-      if (content.deviceId !== activeCameraDeviceId || !activeCameraStream) {
-        startCamera(content.deviceId);
-      }
-
-      if (content.overlayPosition === 'bottom-third') {
-        // Animated lower-third strip
-        stage.style.opacity = '0';
-        bgOverlay.style.background = 'rgba(0,0,0,0)';
-        showLowerThird(
-          content.text,
-          content.textRef,
-          content.autoDismiss || 0,
-          content.style
-        );
-      } else {
-        // Full-screen text overlay (center / top / bottom)
-        hideLowerThird();
-        const pos = content.overlayPosition || 'center';
-        stage.style.alignItems     = pos === 'top' ? 'flex-start' : pos === 'bottom' ? 'flex-end' : 'center';
-        stage.style.justifyContent = 'center';
-        stage.style.opacity = '1';
-        bgOverlay.style.background = 'rgba(0,0,0,0.45)';
-        applyTextStyle(content.text, content.style);
-      }
       break;
     }
 
     // ── Remove camera, restore text/video mode ───────────────────────────
     case 'clear-camera': {
       stopCamera();
-      hideLowerThird();
       stage.style.opacity = '1';
       bgOverlay.style.background = 'rgba(0,0,0,0)';
       break;
     }
 
-    // ── Text with optional background video (existing behaviour) ─────────
+    // ── Text with optional background video ──────────────────────────────
     case 'text': {
       blankOv.style.display = 'none';
       stage.style.opacity = '1';
-      hideLowerThird();
 
       if (content.videoPath) {
         if (content.videoPath !== bgVideo.dataset.src) {
@@ -420,10 +292,15 @@ function applyTextStyle(text, style) {
     ? '0 2px 16px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6)'
     : 'none';
 
-  textBlock.classList.remove('fade-enter');
-  void textBlock.offsetWidth;
-  textBlock.textContent = text || '';
-  textBlock.classList.add('fade-enter');
+  const textChanged = textBlock.textContent !== (text || '');
+  if (textChanged) {
+    textBlock.classList.remove('fade-enter');
+    void textBlock.offsetWidth;
+    textBlock.textContent = text || '';
+    textBlock.classList.add('fade-enter');
+  } else {
+    textBlock.textContent = text || '';
+  }
 }
 
 async function showLogo(content) {

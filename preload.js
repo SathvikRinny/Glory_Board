@@ -17,10 +17,17 @@ contextBridge.exposeInMainWorld('gloryAPI', {
   pickFile: (opts) => ipcRenderer.invoke('pick-file', opts),
   readFileBase64: (path) => ipcRenderer.invoke('read-file-base64', path),
   getScreenThumbnail: (displayId) => ipcRenderer.invoke('get-screen-thumbnail', displayId),
+  prepareScreenCaptureSync: (displayId) => ipcRenderer.sendSync('prepare-screen-capture', displayId),
+  readPdf: (filePath) => ipcRenderer.invoke('read-pdf', filePath),
+
+  // Stage window
+  openStageWindow: () => ipcRenderer.invoke('open-stage-window'),
+  closeStageWindow: () => ipcRenderer.invoke('close-stage-window'),
+  pushStageUpdate: (data) => ipcRenderer.invoke('push-stage-update', data),
 
   // Events from main process
   on: (channel, fn) => {
-    const allowed = ['displays-changed', 'display-closed', 'display-info', 'show-content'];
+    const allowed = ['displays-changed', 'display-closed', 'display-info', 'show-content', 'stage-update', 'stage-window-closed'];
     if (allowed.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => fn(...args));
     }

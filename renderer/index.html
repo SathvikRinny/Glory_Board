@@ -1434,6 +1434,7 @@ function toggleSync(enable) {
 
 // Tracks the text currently live on screen so style changes can re-push it
 let liveText = null;
+let liveVerseRef = null; // tracks reference line separately so style changes don't lose it
 
 function updateTextStyle() {
   const size = document.getElementById('font-size').value;
@@ -1517,27 +1518,17 @@ function setAlign(align) {
 // MUST NOT call buildContent() here — that would create infinite recursion via updateTextStyle()
 function pushStyleLive() {
   if (liveText === null) return;
-  let content;
-  if (camFeedActive && selectedCameraId) {
-    content = {
-      type: 'camera-text',
-      deviceId: selectedCameraId,
-      text: liveText,
-      overlayPosition: 'bottom-third',
-      autoDismiss: lowerThirdDuration,
-      style: { ...textStyle },
-      transition: transitionStyle,
-    };
-  } else {
-    content = {
-      type: 'text',
-      text: liveText,
-      style: { ...textStyle },
-      videoPath,
-      videoLooping,
-      transition: transitionStyle,
-    };
-  }
+  const text = (liveVerseRef && lastVerseText)
+    ? `${lastVerseText}\n— ${liveVerseRef}`
+    : liveText;
+  const content = {
+    type: 'text',
+    text,
+    style: { ...textStyle },
+    videoPath,
+    videoLooping,
+    transition: transitionStyle,
+  };
   const target = syncMode ? null : focusedDisplayId;
   API.pushContent({ displayId: target, content });
 }
@@ -1724,43 +1715,12 @@ function selectChapter(ch) {
 function sendVerseToScreen(text, ref) {
   lastVerseText = text;
   lastVerseRef  = ref;
-  if (camFeedActive && selectedCameraId) {
-    liveText = text;
-    const target = syncMode ? null : focusedDisplayId;
-    API.pushContent({
-      displayId: target,
-      content: {
-        type: 'camera-text',
-        deviceId: selectedCameraId,
-        text,
-        textRef: ref,
-        overlayPosition: 'bottom-third',
-        autoDismiss: lowerThirdDuration,
-        style: { ...textStyle },
-        transition: transitionStyle,
-      }
-    });
-    updateLiveStatus();
-    return;
-  }
   sendText(`${text}\n— ${ref}`);
+  liveVerseRef = ref; // set after sendText (which resets it to null)
 }
 
 // ── Content Pushing ───────────────────────────────────────────────────────
-// textStyle is always current — every input calls updateTextStyle() via oninput.
-// Do NOT call updateTextStyle() here; it would recurse through pushStyleLive().
 function buildContent(text) {
-  if (camFeedActive && selectedCameraId) {
-    return {
-      type: 'camera-text',
-      deviceId: selectedCameraId,
-      text,
-      overlayPosition: 'bottom-third',
-      autoDismiss: lowerThirdDuration,
-      style: { ...textStyle },
-      transition: transitionStyle,
-    };
-  }
   return {
     type: 'text',
     text,
@@ -1773,6 +1733,7 @@ function buildContent(text) {
 
 function sendText(text) {
   liveText = text;
+  liveVerseRef = null;
   updateMiniPreview();
   const content = buildContent(text);
   const target = syncMode ? null : focusedDisplayId;
@@ -1793,6 +1754,7 @@ function presentContent() {
 
 function blankAll() {
   liveText = null;
+  liveVerseRef = null;
   if (camFeedActive) {
     camFeedActive = false;
     document.getElementById('cam-feed-btn')?.classList.remove('live');
@@ -1803,6 +1765,7 @@ function blankAll() {
 
 function clearText() {
   liveText = null;
+  liveVerseRef = null;
   const target = syncMode ? null : focusedDisplayId;
   API.pushContent({ displayId: target, content: { type: 'clear-text' } });
 }
@@ -1909,7 +1872,6 @@ document.addEventListener('keydown', (e) => {
 let cameraDevices = [];
 let selectedCameraId = null;
 let ctrlPreviewStream = null;
-let lowerThirdDuration = 0;    // 0 = manual (no auto-dismiss)
 let transitionStyle = 'fade';  // 'fade' | 'cut'
 let activeScene = null;        // 'camera' | 'verse' | 'lyrics' | 'blank' | null
 let lastVerseText = null;
@@ -2029,17 +1991,6 @@ function toggleCamFeed() {
   updateLiveStatus();
 }
 
-function setLTDuration(secs) {
-  lowerThirdDuration = secs;
-  ['5s','10s','15s','man'].forEach(id => {
-    const el = document.getElementById(`lt-${id}`);
-    if (el) {
-      const val = id === 'man' ? 0 : parseInt(id);
-      el.classList.toggle('active', val === secs);
-    }
-  });
-}
-
 function setTransition(style) {
   transitionStyle = style;
   // Update --fade CSS var on presentation side (can't do cross-window but we control fade duration)
@@ -2069,7 +2020,6 @@ function activateScene(scene) {
     }
 
     case 'verse': {
-      // Camera stays running; put last verse as lower-third
       if (!lastVerseText) {
         if (!selBook || !selChapter) { switchMode('bible'); return; }
         const firstVerseNum = Object.keys(getBibleData()[selBook]?.[selChapter] || {}).map(Number).sort((a,b)=>a-b)[0];
@@ -2078,25 +2028,7 @@ function activateScene(scene) {
         lastVerseRef  = `${selBook} ${selChapter}:${firstVerseNum}`;
         if (!lastVerseText) { switchMode('bible'); return; }
       }
-      if (!camFeedActive || !selectedCameraId) {
-        // Camera not live — send as normal text
-        sendText(lastVerseText);
-        return;
-      }
-      API.pushContent({
-        displayId: target,
-        content: {
-          type: 'camera-text',
-          deviceId: selectedCameraId,
-          text: lastVerseText,
-          textRef: lastVerseRef,
-          overlayPosition: 'bottom-third',
-          autoDismiss: lowerThirdDuration,
-          style: { ...textStyle },
-          transition: transitionStyle,
-        }
-      });
-      updateLiveStatus();
+      sendText(`${lastVerseText}\n— ${lastVerseRef}`);
       break;
     }
 
@@ -2105,21 +2037,7 @@ function activateScene(scene) {
         ? (slides[currentSlideIdx] || slides[0])
         : document.getElementById('lyrics-input').value.trim();
       if (!text) return;
-      if (!selectedCameraId) { sendText(text); return; }
-      API.pushContent({
-        displayId: target,
-        content: {
-          type: 'camera-text',
-          deviceId: selectedCameraId,
-          text,
-          overlayPosition: 'bottom-third',
-          autoDismiss: lowerThirdDuration,
-          style: { ...textStyle },
-          transition: transitionStyle,
-        }
-      });
-      liveText = text;
-      updateLiveStatus();
+      sendText(text);
       break;
     }
 
